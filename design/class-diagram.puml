@@ -1,0 +1,151 @@
+@startuml
+' SplitSmart Release 1 — domain class diagram
+' FR/NFR ids on the elements they satisfy. No Swing classes here (Principle VII).
+
+package "splitsmart.model (domain)" #FFFFFF {
+  enum ApprovalState { PENDING APPROVED REJECTED }
+  enum SplitType { EQUAL PERCENTAGE }
+
+  class User {
+    id : Long
+    name : String
+    email : String
+    passwordHash : String
+    register() : User ' FR-001
+    logIn(email, password) : boolean ' FR-002
+  }
+
+  class Group {
+    id : Long
+    name : String
+    owner : User
+    members : List<User>
+    approvalLevels : int ' FR-004
+    addMember(u : User)
+    removeMember(u : User)
+  }
+
+  class Expense {
+    id : Long
+    group : Group
+    payer : User
+    participants : List<User> ' FR-008
+    amount : BigDecimal(scale 2) ' NFR-001
+    date : LocalDate
+    description : String
+    receiptPath : String ' FR-005 (optional)
+    splitType : SplitType
+    state : ApprovalState
+  }
+
+  class SplitLine {
+    user : User
+    share : BigDecimal(scale 2)
+  }
+
+  class Payment {
+    id : Long
+    from : User
+    to : User
+    amount : BigDecimal(scale 2) ' FR-013, NFR-001
+    date : LocalDate
+  }
+
+  class Notification {
+    id : Long
+    recipient : User
+    expense : Expense ' FR-010
+    message : String
+    read : boolean
+  }
+
+  class AuditEvent {
+    id : Long
+    actor : User
+    timestamp : LocalDateTime ' NFR-005, NFR-008
+    action : String
+    outcome : String
+    expenseId : Long
+  }
+}
+
+package "splitsmart.service (business)" #FFFFFF {
+  class AuthService {
+    register(email, name, password)
+    logIn(email, password) : User ' FR-002
+    resetPassword(email)
+  }
+  class GroupService {
+    createGroup(name, owner) ' FR-003
+    configureApproval(g, levels) ' FR-004
+  }
+  class ExpenseService {
+    createExpense(...) ' FR-005, FR-009
+    equalSplit(total, n) : List<SplitLine> ' FR-006 remainder rule
+    percentageSplit(total, percents) : List<SplitLine> ' FR-007, must total 100%
+  }
+  class ApprovalService {
+    approve(expense) ' FR-011
+    reject(expense)
+  }
+  class BalanceService {
+    pairwiseBalances() : Map<User, Map<User, BigDecimal>> ' FR-012
+    recompute(expense)
+  }
+  class PaymentService {
+    recordPayment(from, to, amount) ' FR-013, capped at owed
+  }
+  class ReportService {
+    summary() ' FR-014
+    customReport(range) ' FR-015
+  }
+  class NotificationService {
+    notifyMembers(expense) ' FR-010 (in-app only, R1)
+  }
+  class AuditService {
+    record(actor, action, outcome, expenseId) ' NFR-005, NFR-008
+  }
+}
+
+package "splitsmart.persistence (seam)" #FFFFFF {
+  interface UserRepository { find, save, findByEmail }
+  interface GroupRepository { find, save, delete }
+  interface ExpenseRepository { find, save, findByState }
+  interface PaymentRepository { find, save }
+
+  class JsonFileUserRepository
+  class JsonFileGroupRepository
+  class JsonFileExpenseRepository
+  class JsonFilePaymentRepository
+}
+
+Expense "1" *-- "1..*" SplitLine : split among participants
+Group "1" o-- "1..*" User : members
+Group "1" *-- "1" User : owner
+Expense "1" o-- "1" User : payer
+Expense "1" --> ApprovalState
+Expense "1" --> SplitType
+Notification "1" --> "1" User
+Notification "1" --> "1" Expense
+Payment "1" --> "1" User : from
+Payment "1" --> "1" User : to
+AuditEvent "1" --> "1" User : actor
+
+ExpenseService ..> NotificationService : after approval
+ExpenseService ..> AuditService : logs every event
+ApprovalService ..> BalanceService : recompute on APPROVED
+PaymentService ..> BalanceService : reduce pairwise debt
+ReportService ..> ExpenseRepository : reads
+ReportService ..> PaymentRepository : reads
+
+AuthService ..> UserRepository
+GroupService ..> GroupRepository
+ExpenseService ..> ExpenseRepository
+ApprovalService ..> ExpenseRepository
+PaymentService ..> PaymentRepository
+
+JsonFileUserRepository .up.|> UserRepository
+JsonFileGroupRepository .up.|> GroupRepository
+JsonFileExpenseRepository .up.|> ExpenseRepository
+JsonFilePaymentRepository .up.|> PaymentRepository
+@enduml

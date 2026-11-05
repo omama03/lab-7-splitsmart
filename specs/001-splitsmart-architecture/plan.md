@@ -8,6 +8,8 @@
 
 SplitSmart Release 1 is a desktop application for sharing expenses between individuals and groups (roommates, trips, coworkers), covering accounts, groups, expenses with equal/percentage splits, an approval workflow, pairwise balances, payments, and reporting. This plan was produced with the Spec Kit workflow as the **baseline architecture**: a single Java Swing monolith split into model / service / persistence / UI packages, Maven as the only build, JUnit 5 as the quality gate, and file-based JSON persistence. It keeps Release 1 fully offline and defers the web/mobile delivery of F9 to later releases, exactly as decided in Lab 6.
 
+**Consolidation outcome (2026-11-05)**: after the ChatGPT reviews of this baseline and of `alternative-architecture.md`, this baseline was **chosen** for Release 1 (decision in [`decision.md`](decision.md)); the merged result — including the adopted Release 2 evolution — is [`final-architecture.md`](final-architecture.md).
+
 ## Technical Context
 
 **Language/Version**: Java SE 21 (`--release 21`), records/sealed types/switch expressions used where they help readability

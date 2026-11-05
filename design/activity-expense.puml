@@ -1,0 +1,57 @@
+@startuml
+' SplitSmart — expense lifecycle activity diagram
+' Covers FR-005..FR-011, FR-010, FR-012, NFR-008
+
+start
+:User opens expense entry form;
+split
+ :amount, date, description;
+ :optional receipt image (FR-005);
+ split again
+ :select split type;
+ :select participants (FR-008);
+end split
+
+if (amount valid?\n(non-empty, > 0, two decimals)) then (no)
+  :reject with specific message\n**FR-009**;
+  :no balance or state change;
+  stop
+else (yes)
+endif
+
+if (split type?) then (EQUAL)
+  :divide total among participants;\n**FR-006**
+  :round half-up to cents;
+  :assign leftover cents to first\nparticipants in list order;
+else (PERCENTAGE)
+  if (percentages total exactly 100%?) then (no)
+    :reject with clear message\n**FR-007 / FR-009**;
+    stop
+  else (yes)
+    :compute each share by\nexact percentage arithmetic;\n**FR-007**
+  endif
+endif
+
+:submit expense -> state **PENDING**;
+:write audit event: created\n**NFR-005 / NFR-008**;
+
+repeat
+  :approval review queue (FR-011);\nlevels per FR-004
+  if (reviewer decision?) then (reject)
+    :state -> REJECTED;
+    :write audit event: rejected\n**NFR-008**;
+    :no balance effect ever (FR-011);
+    stop
+  else (approve)
+    :approval level done;
+  endif
+repeat while (more approval levels?) is (yes)
+-> no
+
+:state -> APPROVED;
+:recompute pairwise balances\nfrom approved expense **FR-012**;
+:balances adjust within 1 s\n**NFR-003**;
+:notify each other member in-app,\ncreator not self-notified **FR-010**;
+:write audit event: approved, actor + timestamp **NFR-008**;
+stop
+@enduml

@@ -11,6 +11,8 @@ The project MUST be built exclusively with Maven (`mvn`). `pom.xml` MUST set `ma
 ### III. Java Swing User Interface
 The MVP user interface MUST be implemented with Java Swing. All user-facing screens (login, groups, expenses, balances, payments, reports, approvals) MUST live in Swing windows/panels. No third-party UI frameworks or web frontends may be introduced into the MVP without an amendment to this constitution.
 
+> **Amendment (2026-11-05, per ADR-001 in `requirements.md`):** the Swing mandate applies to Release 1. The web REST API described in `specs/001-splitsmart-architecture/final-architecture.md` (Spring Boot + React, adopted from the alternative architecture) is the sanctioned Release 2/3 user interface. All other principles, in particular VIII (BigDecimal money) and IX (traceability), apply unchanged to the Release 2 web architecture.
+
 ### IV. JUnit 5 Testing (NON-NEGOTIABLE)
 All business logic MUST be covered by JUnit 5 (Jupiter) tests executed through the Maven Surefire plugin. `mvn test` MUST pass before any feature is considered done. JUnit 4 vintage tests are not permitted. Tests MUST address validation, splitting arithmetic, balance and payment accounting, and approval transitions.
 

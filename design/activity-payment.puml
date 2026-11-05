@@ -1,0 +1,27 @@
+@startuml
+' SplitSmart — payment / settlement activity diagram
+' Covers FR-013 (also NFR-008 audit, FR-012 balances)
+
+start
+:User opens balance view (FR-012);
+:select a pairwise debt\n(owed by me → other user);
+
+:enter payment amount;
+if (amount ≤ currently owed balance?) then (no)
+  :reject: payment capped at owed\n**FR-013**;
+  :no balance change;
+  stop
+else (yes)
+endif
+
+if (amount == owed balance?) then (yes — full)
+  :record full payment;
+  :pairwise balance → 0 **FR-013**;
+else (no — partial)
+  :record partial payment;
+  :pairwise balance reduced exactly\nby payment amount **FR-013**;
+endif
+
+:write audit event: payment recorded,\nactor + timestamp + outcome **NFR-008**;
+stop
+@enduml
