@@ -29,3 +29,12 @@ This repository documents the full Lab 7 flow: two competing architectures were 
 ## Traceability summary
 
 All 9 customer features (F1–F9 in `UserRequirement.md`) → 16 functional + 8 non-functional requirements → design elements: verified 2026-11-05, table in `design/design.md` §5.
+
+## Lab 8 — development environment
+
+The Docker-based dev environment for the implementation phase (Labs 8–9) is set up in this repo:
+
+- `.devcontainer/Dockerfile` — Node 22 image with Next.js 15 + TypeScript/Tailwind, Prisma 6 with SQLite, better-sqlite3 and Vitest preinstalled during the image build, plus a starter Next.js app kept as a template.
+- `.devcontainer/devcontainer.json` — builds the image, runs `init-splitsmart` on container creation (copies the preinstalled starter into `prototype/`), forwards port 3000.
+- `.gitignore` — repo-wide ignore rules for Labs 6–9: node/next build output, env files, SQLite databases; the devcontainer config itself stays tracked.
+- The workspace path inside the Dockerfile was adjusted to this repository's name (`/workspaces/lab-7-splitsmart`), lines 142 and 165 — the lab notes the folder name may differ per student.
